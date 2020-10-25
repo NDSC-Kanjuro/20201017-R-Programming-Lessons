@@ -41,11 +41,41 @@ my_function(param1 = 10)
 #          fungsi read_csv() dibanding versi base
 
 getwd() # buat lihat directory kita lagi di mana
+setwd("lessons/")
 setwd(here()) # buat setting directory
 
-here("datasets") # menggenerate absolute directory
-read_csv("datasets/balitaGiziBuruk-3.csv")
+here("datasets/balitaGiziBuruk-3.csv") # menggenerate absolute directory
 
+# Pemakaian directory
+# 1) bisa pakai absolue directory
+data <- read_csv("C:/Users/Dito/Documents/20201017 R Programming Lessons/datasets/balitaGiziBuruk-3.csv")
+data <- read_csv("D:/Projects/20201017 R Programming Lessons/datasets/balitaGiziBuruk-3.csv")
+# 2) bisa pakai relative directory
+setwd("lessons/02_DplyrDataWrangling/")
+data <- read_csv("datasets/balitaGiziBuruk-3.csv")
+data <- read_csv("../../datasets/balitaGiziBuruk-3.csv")
+
+# Solusi permasalahan absolute dan relative directory
 here("datasets/balitaGiziBuruk-3.csv")
-here()
 
+# data.frame vs tibble
+class(mtcars)
+mtcars
+as_tibble(mtcars)
+class(as_tibble(mtcars))
+tibble("hello world" = c(2,1,1,1,1,1,2))
+data.frame("hello world" = c(2,1,1,1,1,1,2))
+
+# read_csv and read.csv
+# csv: comma separated value
+# tsv: tab separated value
+read_csv(here("datasets/balitaGiziBuruk-3.csv"))
+read.csv(here("datasets/balitaGiziBuruk-3.csv"), sep="\t")
+?read_csv
+?read.csv
+
+path <- here("datasets/balitaGiziBuruk-3.csv")
+
+read_csv(path, col_names = TRUE, col_types = NULL,
+         quote = "\"", comment = "", trim_ws = TRUE, skip = 0,
+         n_max = 5, skip_empty_rows = TRUE)
