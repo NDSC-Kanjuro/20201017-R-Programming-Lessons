@@ -191,6 +191,3 @@ fun1 <- function(paramater = 4) {
   return(parameter * 100)
 }
 print(100)
-
-# git config --global user.email "you@example.com"
-# git config --global user.name "Your Name"
