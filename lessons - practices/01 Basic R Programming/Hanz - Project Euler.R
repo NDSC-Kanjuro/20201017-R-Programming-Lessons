@@ -10,10 +10,13 @@ library(here)
 numbers <- 1:1000
 target_numbers <- numbers[1:1000 %% 5 == 0 | 1:1000 %% 3 == 0]
 
+# three lines solution + creating 'numbers' and 'target_numbers'
 sum(target_numbers)
 
+# two lines solution + creating 'numbers'
 sum(numbers[1:1000 %% 5 == 0 | 1:1000 %% 3 == 0])
 
+# one line solution
 sum(c(1:1000)[1:1000 %% 5 == 0 | 1:1000 %% 3 == 0])
 
 
@@ -62,6 +65,47 @@ primes[10001]
 
 13 %% 2:(13-1) == 0
 ?any
+
+
+
+# PROBLEM 39
+# ==========
+# If p is the perimeter of a right angle triangle with integral
+# length sides, {a,b,c}, there are exactly three solutions for 
+# p = 120.
+# 
+# {20,48,52}, {24,45,51}, {30,40,50}
+# 
+# For which value of p ≤ 1000, is the number of solutions maximised?
+
+20+48+52 == 120
+24+45+51 == 120 
+30+40+50 == 120
+hypotenuse <- function(a,b) {sqrt(a^2 + b^2)}
+perimeter  <- function(a,b) {sum(a,b,hypotenuse(a,b))}
+
+side_a <- NULL
+side_b <- NULL
+search_limit <- 1000
+
+for (i in 1:search_limit) {
+  for (j in 1:search_limit) {
+    p = perimeter(i,j)
+    h = hypotenuse(i,j)
+    if (p > 1000 | h%%1!=0 | j %in% side_a) {
+      next
+    }
+    side_a <- c(side_a, i)
+    side_b <- c(side_b, j)
+  }
+  # print(i)
+}
+
+side_c <- hypotenuse(side_a, side_b)
+all_sides <- rbind(side_a, side_b, side_c)
+max_value <- max(colSums(all_sides))
+max_index <- which(colSums(all_sides) == max_value)
+all_sides[, max_index]
 
 
 
@@ -136,7 +180,7 @@ pentagon(1912)
 
 
 # First trial, but it was failed because I only checked 
-# the first 1000 pentagonal number
+# within the first 1000 pentagonal number
 .pent_length <- 2395
 pent_num <- pentagon(1:.pent_length)
 check_result <- matrix(ncol = .pent_length, nrow = .pent_length)
@@ -156,7 +200,7 @@ which(check_result == TRUE)
 # 5188590
 check_result[5188590]
 
-# K = 2167; or ceiling(5188590 / 2395), round up because start from 1
+# K = 2167; or ceiling(5188590 / 2395), round up since start from 1
 # J = 1020; or 5188590 %% 2395
 ceiling(5188590 / 2395)
 5188590 %% 2395
