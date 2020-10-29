@@ -1,1 +1,8 @@
 print ("uvuvuweveonyeteweve")
+install.packages("tidyverse")
+library(here)
+here()
+installed.packages()
+install.packages("here")
+library(here)
+here()

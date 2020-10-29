@@ -44,8 +44,8 @@ getwd() # buat lihat directory kita lagi di mana
 setwd(here()) # buat setting directory
 
 here("datasets") # menggenerate absolute directory
-read_csv("datasets/balitaGiziBuruk-3.csv")
+read.csv("datasets/balitaGiziBuruk-3.csv")
 
-here("datasets/balitaGiziBuruk-3.csv")
+read_csv(here("datasets/balitaGiziBuruk-3.csv"))
 here()
 
