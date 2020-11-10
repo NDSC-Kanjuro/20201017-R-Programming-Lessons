@@ -1,13 +1,17 @@
-library(rpart)
-library(dplyr)
-library(here)
-library(rpart.plot)
+library(rpart) #library untuk bikin decision tree
+library(dplyr) #library untuk proses data
+library(here)  #library untuk manage direktori
+library(rpart.plot)  #library untuk plotting decision tree
 
 #import data
 raw_data <- read.csv(here("../Supervised Learning/loans.csv")) 
 
 #preprocess data
 #membuat label raw data
+d <-raw_data%>%
+  filter(xor(default == 0,keep == 0))
+
+
 raw_data$outcome <- 0
 for (i in 1:nrow(raw_data)){
   if(raw_data$keep[i] == 0 & raw_data$default[i] == 0){
@@ -35,11 +39,13 @@ train_data <- ready_data[sample_rows,]  #buat data train
 test_data <- ready_data[-sample_rows,]  #buat data test
 
 #membuat model 
-model <- rpart(outcome~.,data=train_data,method ="class")
+model <- rpart(outcome~loan_amount + credit_score,data=train_data,method ="class")
 
 #membuat prediksi model
 test_data$pred <- predict(model,test_data,type="class")
 
 #melihat akurasi model
-mean(test_data$pred == test_data$outcome)
-table(test_data$pred,test_data$outcome)
+mean(test_data$pred == test_data$outcome) #melihat berapa persen akurasi model
+table(test_data$pred,test_data$outcome) #membuat confusion matrix
+
+
