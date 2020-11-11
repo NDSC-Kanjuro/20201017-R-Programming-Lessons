@@ -1,28 +1,77 @@
+---
+title: "Credit Card Fraud Detection"
+author: "Praditya Humam Ramadhanu"
+date: "11/11/2020"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+Project ini bertujuan untuk membuat model yang dapat mengklasifikasikan apakah sebuah transaksi termasuk fraud atau tidak. Kebanyakan fitur dalam dataset sudah discaled nilainya dan tidak ditunjukkan nama fiturnya untuk alasan privasi. Namun,kita tetap bisa membangun model menggunakan fitur-fitur tersebut untuk melakukan klasifikasi.
+
+## Tujuan Project
+
+1. Memahami distribusi data transaksi yang bersifat fraud dan tidak.
+2. Membuat sub-dataframe dengan rasio transaksi fraud dan tidak fraud         yang tidak terlalu jauh agar model tidak overfitting.
+3. Menentukan algoritma klasifikasi mana yang memberikan hasil yang           terbaik.
+
+## Referensi 
+
+1. [Kaggle](https://www.kaggle.com/janiobachmann/credit-fraud-dealing-with-imbalanced-datasets/notebook)
+2. [Machinelearningplus.com](https://www.machinelearningplus.com/machine-learning/caret-package/)
+
+
+## Packages yang Digunakan
+
+```{r Daftar Library}
+# library untuk mengolah data
+library(utils)
 library(tidyr)
 library(dplyr)
-library(ggplot2)
-library(caret)
-library(here)
+
+# library untuk memplot data
 library(corrplot)
+library(ggplot2)
 
+# library untuk membangun model
+library(caret)
 
-#mengimport file csv
+# library untuk directory
+library(here)
+
+```
+# Datasets 
+
+Dataset transaksi kartu kredit berasal dari [kaggle](https://www.kaggle.com/mlg-ulb/creditcardfraud). Data berisi 28 variabel yang tidak diketahui nama kolomnya dan sudah di scaled oleh pemilik data,variabel waktu transaksi, dan variabel jumlah uang pertransaksi.
+
+```{r Summary Data}
+# Import data csv
 df <- read.csv(here("creditcard.csv"))
 
-#melihat ringkasan dataframe
+# melihat ringkasan dataframe
 str(df)
 summary(df)
 
-#cek jumlah data kosong dan data na
+# cek jumlah data kosong dan data na
 sum(is.null(df))
 sum(is.na(df))
 
-#melihat perbandingan data fraud dan non frauds
+# melihat perbandingan data fraud dan non frauds
 p_f <- round(sum(df$Class==1)/nrow(df)*100,2)
 p_nf <- round(sum(df$Class==0)/nrow(df)*100,2)
 sprintf("Persentase data yang bersifat frauds adalah %g persen",p_f)
 sprintf("Persentase data yang bersifat non-frauds adalah %g persen",p_nf)
+```
 
+### Exploration Data Analysis
+Berdasarkan eksplorasi data diatas, tidak terdapat nilai NULL atau nilai NA pada dataset. Dataset juga sangat tidak seimbang, persentase observasi yang termasuk non-frauds jauh lebih besar dibandingkan yang termasuk frauds.
+
+```{r Plot Distribusi Variabel}
 #memplot distribusi waktu dan jumlah per transaksi
 ggplot(df,aes(x=Time))+
   geom_histogram()+
@@ -31,14 +80,30 @@ ggplot(df,aes(x=Time))+
 ggplot(df,aes(x=Amount))+
   geom_histogram()+
   labs(title ="Distribusi Jumlah Transaksi")
+```
 
+Dilihat dari distribusi waktu transaksi diketahui bahwa terdapat dua waktu puncak yang terjadi jumlah transaksi terbanyak. Dilihat dari distribusi jumlah transaksi diketahui bahwa jumlah transaksi di dataset ini mayoritas adalah transaksi berjumlah kecil.
+
+
+#Pre-processing
+
+### Scaling Variabel
+Semua variabel kecuali "Time" dan "Amount" sudah di scaled, oleh karena itu kita scaled variebel "Time" dan "Amount".  
+```{r Scaled Variable}
 #membuat dataset baru tanpa kolom time dan amount untuk sampling
-data<- subset(df,select = -c(Time,Amount))
+new_df<- subset(df,select = -c(Time,Amount))
 
 #membuat skala kolom time dan amount agar ternormalisasi di dataset baru
-data$scale_time <- scale(df$Time)
-data$scale_amount <- scale(df$Amount)
+new_df$scale_time <- scale(df$Time)
+new_df$scale_amount <- scale(df$Amount)
 
+```
+
+
+### Undersampling
+
+Perbandingan persentase data yang fraud (`r p_f`) dan data yang non-fraud ('r p_nf`) sangat tidak seimbang. Oleh karena itu perlu diperlakukan teknik sampling undersampling atau oversampling agar model yang dihasilkan tidak overfitting kearah non-fraud. Pada project ini akan digunakan random undersampling.
+```{r undersampling}
 #membuat dataset baru tanpa kolom time dan amount untuk sampling
 data<- subset(df,select = -c(Time,Amount))
 
@@ -58,12 +123,16 @@ under_sampling <- nfraud_df[sample_num,]
 #membuat dataset baru hasil undersampling
 new_df <- rbind(fraud_df,under_sampling)
 
-#Plot hasil sampling 
+#plot hasil undersampling
 ggplot(new_df,aes(x=Class))+
   geom_bar()+
   scale_x_discrete(labels=c('non-fraud','fraud'))
 
+```
 
+### Correlation Matrix
+Setelah semua data di scaled, kita lihat bagimana korelasi antar semua variabel dengan memplot correlation matrix.
+```{r Correlation Matrix}
 #melihat korelasi matrix antar variabel
 cor_mat <- cor(new_df)
 corrplot(cor_mat, type = "upper", order = "hclust", 
@@ -71,11 +140,19 @@ corrplot(cor_mat, type = "upper", order = "hclust",
 
 #Melihat mana yang korelasi paling berpengaruh ke Class
 matrix <- cor_mat[,"Class"]
+
 # 5 korelasi positif tertinggi terhadap variabel Class
 print(tail(sort(matrix),5,decreasing=TRUE))
 # 5 korelasi negatif tertinggi terhadap variabel Class
 print(head(sort(matrix),5,decreasing=TRUE))
+```
+Dari correlation matrix diatas didapatkan variabel yang paling berpengaruh terhadap variabel "Class" adalah V14,V4,V11,V12, dan V10.
 
+### Outlier Removal
+
+Selanjutnya kita menghilangkan data-data outlier data-data outlier berdasarkan V14,V4,V11,V12, dan V10. Namun, karena label yang diutamakan untuk dideteksi adalah berlabel fraud, maka kita lebih mengutamakan menghapus nilai outlier dari data-data yang berlabel fraud.
+
+```{r Outlier Removal}
 #menghapus data outlier berdasarkan v14,v4,v11,v12,v10
 
 ##Mendapatkan nilai yg fraud di V14
@@ -220,6 +297,24 @@ if(length(outlier_v10)>0){
 #mengubah variabel Class menjadi factor N= Non-fraud dan F= Frauds
 new_df$Class <- factor(new_df$Class,levels = c(0,1),labels = c("N","F"))
 
+
+```
+
+# Membangun Model
+
+## Membuat Hypertuning Parameter Obyek untuk Semua Model
+```{r Hypertuning Parameter}
+set.seed(50)
+mycontrol <- trainControl(method = "cv",
+                          number = 10,
+                          summaryFunction = twoClassSummary,
+                          classProbs = TRUE,
+                          verboseIter = TRUE)
+```
+
+## Membuat Model untuk klasifikasi
+Project ini menggunakan 5 algortima klasifikasi untuk dibandingkan hasil akhirnya, yaitu : Random Forest, glmnet atau logistic regression, Extreme Gradient Boost(XGBdart),Support Vector Machine(SVM), dan K Nearest Neighbor. Cross Validation juga dilakukan dengan jumlah fold = 10.
+```{r modeling}
 #Membuat model dengan caret beserta cv
 
 ##membuat object hypertuning parameter
@@ -281,12 +376,25 @@ model_knn <- train( Class ~ .,
 print(model_knn)
 max(model_knn[["results"]][["ROC"]])
 
+```
 
-#Membandingkan performa model 
+# Membandingkan Performa Model
+
+Kelima model yang digunakan dalam project ini dibandingkan menggunakan metrik berupa ROC karena dataset yang digunakan dalam project ini sangat tidak berimbang proposinya,sehingga ROC lebih cocok untuk mengukur performa model.
+
+```{r model comparison}
+#membuat list model yang digunakan
 list_model <- list(RF=model_rf,GLMNET=model_glmnet,XGBDART=model_xgbdart,SVM=model_svm,KNN=model_knn)
+
+#membandingkan semua model
 model_compare <- resamples(list_model)
 summary(model_compare)
 scales <- list(x=list(relation="free"), y=list(relation="free"))
 bwplot(model_compare, scales=scales,metric = "ROC")
 
+```
+Berdasarkan boxplot diatas, didapatkan bahwa model yang paling bagus performanya adalah XGBDart.
 
+#Kesimpulan
+
+Dataset credit card fraud yang digunakan dalam project ini mengandung ketidakseimbangan yang sangat jauh antara data berlabel fraud dan non-fraud. Random Undersampling digunakan untuk mengatasi ketidakseimbangan data ini. Variabel yang paling berpengaruh terhadap nilai di variabel "Class" adalah variabel V14,V11,V12,V4,dan V10. Sehingga data outlier dihilangkan berdasarkan variabel-variabel tersebut. Diantara lima model yang digunakan untuk klasifikasi credit card fraud didapatkan bahwa model XGBDart memiliki ROC yang paling bagus senilai 0.981844.
