@@ -3,6 +3,8 @@ title: "Credit Card Fraud Detection"
 author: "Praditya Humam Ramadhanu"
 date: "11/11/2020"
 output:
+  html_document:
+    df_print: paged
   pdf_document: default
 ---
 
@@ -24,6 +26,7 @@ Project ini bertujuan untuk membuat model yang dapat mengklasifikasikan apakah s
 
 1. [Kaggle](https://www.kaggle.com/janiobachmann/credit-fraud-dealing-with-imbalanced-datasets/notebook)
 2. [Machinelearningplus.com](https://www.machinelearningplus.com/machine-learning/caret-package/)
+3. Data Science with R by Andre Olesky (2018)
 
 
 ## Packages yang Digunakan
