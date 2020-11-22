@@ -31,8 +31,8 @@ summary(data_pc)
 
 ##biplot hasil pca
 biplot(data_pc)
-plot(data_pc$x[, c(1, 2)], col = (diagnosis+1), 
-     xlab = "PC1", ylab = "PC2")
+plot(data_pc$x[, c(1, 4)], col = (diagnosis+1), 
+     xlab = "PC1", ylab = "PC4")
 
 ##scree plot hasil pca
 pc.var <- data_pc$sdev^2 #dapatkan variability
@@ -57,7 +57,7 @@ hclust_data <- hclust(dist(data_scale),method="complete")
 plot(hclust_data)
 
 #potong jumlah clusrer
-hclust_cut <- cutree(hclust_data,k=4)
+hclust_cut <- cutree(hclust_data,k=2)
 
 #bandingkan dengan diagnosis
 table(diagnosis,hclust_cut)
@@ -73,7 +73,7 @@ table(hclust_cut,kmeans_data$cluster)
 
 #hclust dengan data pca
 hclust_pca<- hclust(dist(data_pc$x[,1:7]),method="complete")
-h_clust_pca_cut <- cutree(hclust_pca,k=4)
+h_clust_pca_cut <- cutree(hclust_pca,k=2)
 
 #bandingkan dengan tanpa pca
 table(hclust_cut,h_clust_pca_cut)
